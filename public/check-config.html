@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f7f7f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .message {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Configuration Check</h1>
+    <div id="status"></div>
+    <script>
+        fetch('/check-config')
+            .then(response => response.json())
+            .then(data => {
+                const statusDiv = document.getElementById('status');
+                if (data.status === 'error') {
+                    statusDiv.innerHTML = `<div class="message error">Certaines configurations sont manquantes: <strong>${data.missing.join(', ')}</strong></div>`;
+                } else {
+                    statusDiv.innerHTML = `<div class="message success">${data.message}</div>`;
+                }
+            })
+            .catch(error => {
+                console.error('Erreur lors de la vérification des configurations:', error);
+                document.getElementById('status').innerHTML = `<div class="message error">Erreur lors de la vérification des configurations.</div>`;
+            });
+    </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+# Node.js dependencies
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+
+# MacOS files
+.DS_Store
+
+# Dependency directories
+/.pnp
+.pnp.js
+
+# Optional npm cache directory
+.npm
+
+# Editor-specific files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Build directories
+dist/
+out/
+build/
+
+# Temporary files
+*.tmp
+*.temp
+
+# System files
+Thumbs.db
+.DS_Store
+
+# Coverage directory used by testing tools
+coverage/
+
+# Node REPL history
+.node_repl_history
+
+# Configurations for npm
+.npmrc
+
+# Env files
+.env.test
+.env.production
+
+# Temporary folders created by npm
+.npm/
+
+# Debugger configurations
+*.launch.json

@@ -1,0 +1,22 @@
+{
+  "name": "github-webhook-server",
+  "version": "1.0.0",
+  "description": "A Node.js server for handling GitHub webhooks and sending notifications to various platforms.",
+  "main": "webhook.js",
+  "scripts": {
+    "start": "node webhook.js",
+    "dev": "nodemon webhook.js"
+  },
+  "author": "Votre Nom",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "body-parser": "^1.20.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22"
+  },
+  "keywords": []
+}
