@@ -21,21 +21,27 @@ app.get('/', (req, res) => {
 app.post('/webhook', async (req, res) => {
     try {
         console.log('Webhook received');
-        const event = req.headers['x-github-event'];
-        const payload = req.body;
+        
+        // Afficher les en-têtes de la requête
+        console.log('Headers received:', JSON.stringify(req.headers, null, 2));
 
+        // Afficher le type d'événement
+        const event = req.headers['x-github-event'];
         console.log(`Event type: ${event}`);
+
+        // Afficher le corps de la requête (payload)
+        const payload = req.body;
+        console.log('Payload received:', JSON.stringify(payload, null, 2));
+
         if (!payload) {
             console.error('Error: Payload is undefined or null');
             return res.status(400).json({ status: 'error', message: 'Payload is undefined or null' });
         }
 
-        console.log('Payload received:', JSON.stringify(payload, null, 2));
-
         // Gérer les différents types d'événements GitHub
         switch (event) {
             case 'push':
-                console.log('=> Processing push event...');
+                console.log('Processing push event...');
                 await handlePush(payload);
                 console.log('Push event processed successfully.');
                 break;
