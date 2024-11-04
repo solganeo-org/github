@@ -5,6 +5,13 @@ const config = require('../config/config');
 
 module.exports.handlePush = async (payload) => {
     try {
+        console.log('Received push event payload:', JSON.stringify(payload, null, 2));
+
+        if (!payload || !payload.ref) {
+            console.error('Error: payload or payload.ref is undefined.');
+            throw new Error('Invalid payload: ref is undefined.');
+        }
+
         const branch = payload.ref.replace('refs/heads/', '');
         const commits = payload.commits;
         const repository = payload.repository.full_name;
@@ -45,6 +52,13 @@ module.exports.handlePush = async (payload) => {
 
 module.exports.handlePullRequest = async (payload) => {
     try {
+        console.log('Received pull request event payload:', JSON.stringify(payload, null, 2));
+
+        if (!payload || !payload.pull_request) {
+            console.error('Error: payload or payload.pull_request is undefined.');
+            throw new Error('Invalid payload: pull_request is undefined.');
+        }
+
         const { action, pull_request, repository } = payload;
         const prDetails = {
             number: pull_request.number,
@@ -64,7 +78,7 @@ module.exports.handlePullRequest = async (payload) => {
         switch (action) {
             case 'opened':
             case 'reopened':
-                console.log(`New or reopened PR detected, notifying Slack...`);
+                console.log('New or reopened PR detected, notifying Slack...');
                 await notifySlack(`📝 New PR #${prDetails.number}: ${prDetails.title} in ${prDetails.repository}`);
                 console.log('Slack notification sent for new/reopened PR.');
                 break;
@@ -87,6 +101,13 @@ module.exports.handlePullRequest = async (payload) => {
 
 module.exports.handleIssueComment = async (payload) => {
     try {
+        console.log('Received issue comment event payload:', JSON.stringify(payload, null, 2));
+
+        if (!payload || !payload.comment || !payload.issue) {
+            console.error('Error: payload, payload.comment, or payload.issue is undefined.');
+            throw new Error('Invalid payload: comment or issue is undefined.');
+        }
+
         const { action, comment, issue, repository } = payload;
 
         console.log(`Handling issue comment event: ${action} on issue #${issue.number} in repository: ${repository.full_name}`);
@@ -108,6 +129,13 @@ module.exports.handleIssueComment = async (payload) => {
 
 module.exports.handleSecurityAdvisory = async (payload) => {
     try {
+        console.log('Received security advisory event payload:', JSON.stringify(payload, null, 2));
+
+        if (!payload || !payload.security_advisory) {
+            console.error('Error: payload or payload.security_advisory is undefined.');
+            throw new Error('Invalid payload: security_advisory is undefined.');
+        }
+
         const { action, security_advisory, repository } = payload;
 
         console.log(`Handling security advisory event: ${action} in repository: ${repository.full_name}`);
@@ -128,6 +156,13 @@ module.exports.handleSecurityAdvisory = async (payload) => {
 
 module.exports.handleRepositoryVulnerabilityAlert = async (payload) => {
     try {
+        console.log('Received repository vulnerability alert event payload:', JSON.stringify(payload, null, 2));
+
+        if (!payload || !payload.alert) {
+            console.error('Error: payload or payload.alert is undefined.');
+            throw new Error('Invalid payload: alert is undefined.');
+        }
+
         const { action, alert, repository } = payload;
 
         console.log(`Handling repository vulnerability alert: ${action} in repository: ${repository.full_name}`);

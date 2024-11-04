@@ -1,16 +1,16 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const config = require('./config/config');
 const { handlePush, handlePullRequest, handleIssueComment, handleSecurityAdvisory, handleRepositoryVulnerabilityAlert } = require('./controllers/eventHandlers');
 const verifySignature = require('./middlewares/verifySignature');
+const config = require('./config/config');
 
 const app = express();
 
-// Servir les fichiers statiques à partir du dossier public
-app.use(express.static('public'));
-
 // Middleware pour parser les requêtes JSON et vérifier les signatures des webhooks
 app.use(bodyParser.json({ verify: verifySignature }));
+
+// Servir des fichiers statiques (si nécessaire)
+app.use(express.static('public'));
 
 // Route pour la racine du serveur
 app.get('/', (req, res) => {
@@ -25,6 +25,11 @@ app.post('/webhook', async (req, res) => {
         const payload = req.body;
 
         console.log(`Event type: ${event}`);
+        if (!payload) {
+            console.error('Error: Payload is undefined or null');
+            return res.status(400).json({ status: 'error', message: 'Payload is undefined or null' });
+        }
+
         console.log('Payload received:', JSON.stringify(payload, null, 2));
 
         // Gérer les différents types d'événements GitHub
@@ -56,36 +61,13 @@ app.post('/webhook', async (req, res) => {
                 break;
             default:
                 console.log(`Unhandled event type: ${event}`);
+                return res.status(400).json({ status: 'error', message: `Unhandled event type: ${event}` });
         }
 
         res.status(200).json({ status: 'success', event });
     } catch (error) {
         console.error('Webhook error:', error);
         res.status(500).json({ status: 'error', message: error.message });
-    }
-});
-
-app.get('/check-config', (req, res) => {
-    const missingConfigs = [];
-    const requiredConfigs = ['WEBHOOK_SECRET', 'GITHUB_TOKEN', 'SLACK_WEBHOOK_URL', 'JIRA_API_KEY', 'JIRA_URL'];
-
-    requiredConfigs.forEach((configKey) => {
-        if (!process.env[configKey]) {
-            missingConfigs.push(configKey);
-        }
-    });
-
-    if (missingConfigs.length > 0) {
-        res.status(500).json({
-            status: 'error',
-            message: 'Les configurations suivantes sont manquantes ou incorrectes :',
-            missingConfigs
-        });
-    } else {
-        res.status(200).json({
-            status: 'success',
-            message: 'Toutes les configurations requises sont présentes.'
-        });
     }
 });
 
