@@ -9,8 +9,11 @@ module.exports.handlePush = async (payload) => {
         const commits = payload.commits;
         const repository = payload.repository.full_name;
 
+        console.log(`Handling push event for branch: ${branch} in repository: ${repository}`);
+
         // Log the event
         await logEvent('push', payload);
+        console.log('Event logged successfully for push.');
 
         // Check for sensitive file changes and notify if necessary
         const sensitiveFiles = ['.env', 'config.json', 'secrets.yaml', 'credentials.json'];
@@ -19,16 +22,20 @@ module.exports.handlePush = async (payload) => {
         );
 
         if (sensitiveChanges) {
+            console.log('Sensitive changes detected, notifying Slack...');
             await notifySlack(`🚨 Sensitive changes detected on branch ${branch} in ${repository} by ${payload.pusher.name}`);
+            console.log('Slack notification sent for sensitive changes.');
         }
 
         // Trigger CI/CD if applicable
+        console.log(`Triggering CI/CD for branch: ${branch}...`);
         await triggerCICD({
             repository,
             branch,
             commit: payload.after,
             author: payload.pusher.name
         });
+        console.log('CI/CD triggered successfully.');
 
     } catch (error) {
         console.error('Error handling push event:', error);
@@ -48,17 +55,24 @@ module.exports.handlePullRequest = async (payload) => {
             repository: repository.full_name
         };
 
+        console.log(`Handling pull request event: ${action} for PR #${prDetails.number} in repository: ${prDetails.repository}`);
+
         // Log the event
         await logEvent('pull_request', payload);
+        console.log('Event logged successfully for pull request.');
 
         switch (action) {
             case 'opened':
             case 'reopened':
+                console.log(`New or reopened PR detected, notifying Slack...`);
                 await notifySlack(`📝 New PR #${prDetails.number}: ${prDetails.title} in ${prDetails.repository}`);
+                console.log('Slack notification sent for new/reopened PR.');
                 break;
             case 'closed':
                 if (pull_request.merged) {
+                    console.log(`PR #${prDetails.number} merged, notifying Slack...`);
                     await notifySlack(`✅ PR #${prDetails.number} merged in ${prDetails.repository}`);
+                    console.log('Slack notification sent for merged PR.');
                 }
                 break;
             default:
@@ -75,10 +89,15 @@ module.exports.handleIssueComment = async (payload) => {
     try {
         const { action, comment, issue, repository } = payload;
 
+        console.log(`Handling issue comment event: ${action} on issue #${issue.number} in repository: ${repository.full_name}`);
+
         if (action === 'created') {
             // Log the event
             await logEvent('issue_comment', payload);
+            console.log('Event logged successfully for issue comment.');
+            
             await notifySlack(`💬 New comment on issue #${issue.number} in ${repository.full_name}: "${comment.body}" by ${comment.user.login}`);
+            console.log('Slack notification sent for new issue comment.');
         }
 
     } catch (error) {
@@ -91,9 +110,14 @@ module.exports.handleSecurityAdvisory = async (payload) => {
     try {
         const { action, security_advisory, repository } = payload;
 
+        console.log(`Handling security advisory event: ${action} in repository: ${repository.full_name}`);
+
         if (action === 'published') {
             await logEvent('security_advisory', payload);
+            console.log('Event logged successfully for security advisory.');
+            
             await notifySlack(`🚨 Security advisory published in ${repository.full_name}: ${security_advisory.summary}`);
+            console.log('Slack notification sent for published security advisory.');
         }
 
     } catch (error) {
@@ -106,9 +130,14 @@ module.exports.handleRepositoryVulnerabilityAlert = async (payload) => {
     try {
         const { action, alert, repository } = payload;
 
+        console.log(`Handling repository vulnerability alert: ${action} in repository: ${repository.full_name}`);
+
         if (action === 'created') {
             await logEvent('repository_vulnerability_alert', payload);
+            console.log('Event logged successfully for vulnerability alert.');
+            
             await notifySlack(`🔒 New vulnerability alert in ${repository.full_name} for ${alert.package_name}`);
+            console.log('Slack notification sent for vulnerability alert.');
         }
 
     } catch (error) {
@@ -116,5 +145,3 @@ module.exports.handleRepositoryVulnerabilityAlert = async (payload) => {
         throw error;
     }
 };
-
-// Add additional handlers as needed for more GitHub events.
