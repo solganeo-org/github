@@ -35,7 +35,7 @@ app.post('/webhook', async (req, res) => {
         // Gérer les différents types d'événements GitHub
         switch (event) {
             case 'push':
-                console.log('Processing push event...');
+                console.log('=> Processing push event...');
                 await handlePush(payload);
                 console.log('Push event processed successfully.');
                 break;
