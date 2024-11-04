@@ -65,6 +65,15 @@ app.post('/webhook', async (req, res) => {
                 await handleRepositoryVulnerabilityAlert(payload);
                 console.log('Repository vulnerability alert event processed successfully.');
                 break;
+            case 'repository':
+                if (payload.action === 'renamed') {
+                    console.log('Processing repository rename event...');
+                    await handleRepositoryRename(payload);
+                    console.log('Repository rename event processed successfully.');
+                } else {
+                    console.log(`Unhandled repository action: ${payload.action}`);
+                }
+                break;
             default:
                 console.log(`Unhandled event type: ${event}`);
                 return res.status(400).json({ status: 'error', message: `Unhandled event type: ${event}` });
