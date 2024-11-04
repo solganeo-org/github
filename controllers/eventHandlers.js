@@ -114,7 +114,7 @@ module.exports.handleIssueComment = async (payload) => {
         console.log(`Handling issue comment event: ${action} on issue #${issue.number} in repository: ${repository.full_name}`);
 
         if (action === 'created') {
-            // Log the event
+            // Log the event 
             await logEvent('issue_comment', payload);
             console.log('Event logged successfully for issue comment.');
             
@@ -123,7 +123,7 @@ module.exports.handleIssueComment = async (payload) => {
         }
 
     } catch (error) {
-        console.error('Error handling issue comment event:', error);
+        console.error('=> Error handling issue comment event:', error);
         throw error;
     }
 };
