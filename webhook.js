@@ -74,4 +74,4 @@ app.post('/webhook', async (req, res) => {
 // Démarrer le serveur
 app.listen(config.port, () => {
     console.log(`Webhook server running on http://localhost:${config.port}`);
-});
+}); 
