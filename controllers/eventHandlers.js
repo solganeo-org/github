@@ -9,6 +9,7 @@ module.exports.handlePush = async (payload) => {
 
         if (!payload || !payload.ref) {
             console.error('Error: payload or payload.ref is undefined.');
+            console.log('Payload content:', JSON.stringify(payload, null, 2)); // Ajout pour voir le payload complet
             throw new Error('Invalid payload: ref is undefined.');
         }
 
