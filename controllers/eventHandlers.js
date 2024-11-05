@@ -194,7 +194,7 @@ function checkNewNameFormat(name) {
 
     if (!hasValidSeparators || !hasValidTechnology) {
         console.error(
-            `Erreur de nommage - Résultat obtenu : "${name}" - Résultat attendu : "nomprojet-objectif-techno"`
+            `Erreur de nommage - Résultat obtenu : ${name} - Résultat attendu : nomprojet-objectif-techno`
         );
         return false;
     }
@@ -238,7 +238,7 @@ module.exports.handleRepositoryRename = async (payload) => {
         // Vérification du format de newName
         if (!checkNewNameFormat(newName)) {
             // Message d'erreur formaté pour le renommage
-            const errorMessage = `Erreur de nommage - Résultat obtenu : "${newName}" - Résultat attendu : "nomprojet-objectif-techno"`;
+            const errorMessage = `Erreur de nommage - Résultat obtenu : ${newName} - Résultat attendu : nomprojet-objectif-techno`;
 
             // Renommer le dépôt avec le message d'erreur
             await renameRepository(owner, newName, errorMessage, process.env.GITHUB_TOKEN);
