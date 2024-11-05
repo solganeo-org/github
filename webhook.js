@@ -21,7 +21,9 @@ app.get('/', (req, res) => {
 app.post('/webhook', async (req, res) => {
     try {
         console.log('Webhook received !!');
+        // Afficher la requête
         
+        console.log('Headers received:', JSON.stringify(req, null, 2));
         // Afficher les en-têtes de la requête
         console.log('Headers received:', JSON.stringify(req.headers, null, 2));
 
