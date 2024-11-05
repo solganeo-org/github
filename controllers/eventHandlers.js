@@ -205,3 +205,27 @@ module.exports.handleRepositoryRename = async (payload) => {
         throw error;
     }
 };
+
+module.exports.handleDeploymentStatus = async (payload) => {
+    try {
+        console.log('Received deployment status event payload:', JSON.stringify(payload, null, 2));
+
+        const deploymentStatus = payload.deployment_status.state;
+        const repository = payload.repository.full_name;
+        const environment = payload.deployment.environment;
+
+        console.log(`Deployment status for ${repository} in environment ${environment}: ${deploymentStatus}`);
+
+        // Log the deployment status event
+        await logEvent('deployment_status', payload);
+        console.log('Event logged successfully for deployment status.');
+
+        // Notify via Slack or other integration
+        await notifySlack(`🚀 Deployment status for ${repository} in ${environment}: ${deploymentStatus}`);
+        console.log('Slack notification sent for deployment status.');
+
+    } catch (error) {
+        console.error('Error handling deployment status event:', error);
+        throw error;
+    }
+};
