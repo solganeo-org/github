@@ -187,9 +187,7 @@ module.exports.handleRepositoryVulnerabilityAlert = async (payload) => {
 
 // Fonction pour formater le message d'erreur en nom valide pour GitHub
 function formatErrorMessage(invalidName) {
-    // Création du message d'erreur simple
-    const timestamp = Date.now().toString().slice(-4);
-    return `nom-invalide-${timestamp}-format-projet-techno`;
+    return `nom-invalide-format-projet-techno`;
 }
 
 // Fonction de vérification
