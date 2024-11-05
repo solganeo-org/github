@@ -185,7 +185,7 @@ module.exports.handleRepositoryVulnerabilityAlert = async (payload) => {
     }
 };
 
-// Fonction de vérification du format du nouveau nom
+// Fonction de vérification
 function checkNewNameFormat(name) {
     const words = name.split("-");
     const hasValidSeparators = words.length > 1 && !name.includes(" ");
@@ -223,28 +223,6 @@ async function renameRepository(owner, repo, newName, token) {
     }
 }
 
-// Fonction pour enregistrer les événements de renommage (assurez-vous que logEvent est défini)
-async function logEvent(eventType, payload) {
-    try {
-        // Logique pour stocker l'événement dans votre fichier logs.json ou autre
-        console.log(`Logging event ${eventType}`);
-        // ... implémentez ici la logique de log
-    } catch (error) {
-        console.error('Erreur lors de la journalisation de l\'événement:', error.message);
-    }
-}
-
-// Fonction pour envoyer une notification Slack (assurez-vous que notifySlack est défini)
-async function notifySlack(message) {
-    try {
-        // Logique pour envoyer une notification Slack
-        console.log(`Sending Slack notification: ${message}`);
-        // ... implémentez ici la logique de notification Slack
-    } catch (error) {
-        console.error('Erreur lors de l\'envoi de la notification Slack:', error.message);
-    }
-}
-
 // Fonction principale de gestion du renommage
 module.exports.handleRepositoryRename = async (payload) => {
     try {
@@ -253,11 +231,11 @@ module.exports.handleRepositoryRename = async (payload) => {
         const oldName = payload.changes.repository.name.from;
         const newName = payload.repository.name;
         const fullName = payload.repository.full_name;
-        const [owner] = fullName.split('/'); // Extraction de l'owner
+        const [owner] = fullName.split('/'); // Extract owner from full_name
 
         console.log(`Repository renamed from ${oldName} to ${newName} (${fullName})`);
 
-        // Vérification du format du nouveau nom
+        // Vérification du format de newName
         if (!checkNewNameFormat(newName)) {
             // Nom d'erreur formaté sans espaces ni caractères spéciaux
             const errorMessage = `nom_invalid-${Date.now()}`;
@@ -269,16 +247,16 @@ module.exports.handleRepositoryRename = async (payload) => {
             return;
         }
 
-        // Journalisation de l'événement
+        // Log the rename event
         await logEvent('repository_rename', payload);
         console.log('Event logged successfully for repository rename.');
 
-        // Notification Slack
+        // Notify via Slack
         await notifySlack(`🔄 Repository renamed from ${oldName} to ${newName} (${fullName})`);
         console.log('Slack notification sent for repository rename.');
 
     } catch (error) {
-        console.error('Error handling repository rename event:', error.message);
+        console.error('Error handling repository rename event:', error);
         throw error;
     }
 };
