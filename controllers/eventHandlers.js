@@ -201,14 +201,24 @@ module.exports.handleRepositoryVulnerabilityAlert = async (payload) => {
 
 module.exports.handleRepositoryRename = async (payload) => {
     try {
-        const message = `Repository renamed from ${payload.changes.repository.name.from} to ${payload.repository.name} (${payload.repository.full_name})`;
-        
-        await logEvent('repository_rename', message);
-        
-        // Renvoyer une seule réponse
-        return { status: 'success', message };
+        console.log('Received repository rename event payload:', JSON.stringify(payload, null, 2));
+
+        const oldName = payload.changes.repository.name.from;
+        const newName = payload.repository.name;
+        const fullName = payload.repository.full_name;
+
+        console.log(`Repository renamed from ${oldName} to ${newName} (${fullName})`);
+
+        await logEvent('repository_rename', payload);
+        await logEventToFile('repository_rename', { oldName, newName, fullName });
+
+        console.log('Event logged successfully for repository rename.');
+
+        await notifySlack(`🔄 Repository renamed from ${oldName} to ${newName} (${fullName})`);
+        console.log('Slack notification sent for repository rename.');
+
     } catch (error) {
-        console.error('Error handling repository rename:', error);
+        console.error('Error handling repository rename event:', error);
         throw error;
     }
 };
