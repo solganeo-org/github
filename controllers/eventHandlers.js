@@ -237,10 +237,10 @@ module.exports.handleRepositoryRename = async (payload) => {
 
         // Vérification du format de newName
         if (!checkNewNameFormat(newName)) {
-            // Message d'erreur formaté pour le renommage
-            const errorMessage = `Erreur de nommage - Résultat obtenu : ${newName} - Résultat attendu : nomprojet-objectif-techno`;
+            // Nom d'erreur formaté sans espaces ni caractères spéciaux
+            const errorMessage = `nom_invalid-${Date.now()}`;
 
-            // Renommer le dépôt avec le message d'erreur
+            // Renommer le dépôt avec le message d'erreur formaté
             await renameRepository(owner, newName, errorMessage, process.env.GITHUB_TOKEN);
 
             console.log(`Repository renamed to error message: ${errorMessage}`);
