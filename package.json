@@ -18,5 +18,9 @@
   "devDependencies": {
     "nodemon": "^2.0.22"
   },
-  "keywords": []
+  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "git@github.com-github1:solganeo-org/github-webhooks-node.git"
+  }
 }

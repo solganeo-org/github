@@ -39,38 +39,46 @@ app.post('/webhook', async (req, res) => {
             return res.status(400).json({ status: 'error', message: 'Payload is undefined or null' });
         }
 
+        let parsedPayload;
+        try {
+            parsedPayload = JSON.parse(payload.payload);
+        } catch (error) {
+            console.error("Error parsing payload:", error);
+            return res.status(400).json({ status: 'error', message: 'Invalid JSON payload' });
+        }
+
         // Gérer les différents types d'événements GitHub
         switch (event) {
             case 'push':
                 console.log('Processing push event...');
-                await handlePush(payload);
+                await handlePush(parsedPayload);
                 console.log('Push event processed successfully.');
                 break;
             case 'pull_request':
                 console.log('Processing pull request event...');
-                await handlePullRequest(payload);
+                await handlePullRequest(parsedPayload);
                 console.log('Pull request event processed successfully.');
                 break;
             case 'issue_comment':
                 console.log('Processing issue comment event...');
-                await handleIssueComment(payload);
+                await handleIssueComment(parsedPayload);
                 console.log('Issue comment event processed successfully.');
                 break;
             case 'security_advisory':
                 console.log('Processing security advisory event...');
-                await handleSecurityAdvisory(payload);
+                await handleSecurityAdvisory(parsedPayload);
                 console.log('Security advisory event processed successfully.');
                 break;
             case 'repository_vulnerability_alert':
                 console.log('Processing repository vulnerability alert event...');
-                await handleRepositoryVulnerabilityAlert(payload);
+                await handleRepositoryVulnerabilityAlert(parsedPayload);
                 console.log('Repository vulnerability alert event processed successfully.');
                 break;
             case 'repository':
                 const action = payload.action;
                 if (action === 'renamed') {
                     console.log('Processing repository rename event...');
-                    await handleRepositoryRename(payload);
+                    await handleRepositoryRename(parsedPayload);
                     console.log('Repository rename event processed successfully.');
                 } else {
                     console.log(`Unhandled repository action: ${action}`);
@@ -78,7 +86,7 @@ app.post('/webhook', async (req, res) => {
                 break;
             case 'deployment_status':
                 console.log('Processing deployment status event...');
-                await handleDeploymentStatus(payload);
+                await handleDeploymentStatus(parsedPayload);
                 console.log('Deployment status event processed successfully.');
                 break;
             default:
