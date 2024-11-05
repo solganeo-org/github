@@ -2,6 +2,7 @@ const { notifySlack } = require('./notificationHandlers');
 const { logEvent } = require('../utils/logger');
 const { triggerCICD } = require('../utils/cicd');
 const config = require('../config/config');
+const axios = require('axios');
 
 const validTechnologies = ["node", "html", "css", "javascript", "python", "ruby", "php"];
 
@@ -200,6 +201,44 @@ function checkNewNameFormat(name) {
     return true;
 }
 
+// Fonction pour renommer le dépôt
+async function renameRepository(owner, repo, newName, token) {
+    const url = `https://api.github.com/repos/${owner}/${repo}`;
+    try {
+        const response = await axios.patch(url, { name: newName }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/vnd.github.v3+json',
+            }
+        });
+        console.log(`Repository renamed to ${newName}`);
+        return response.data;
+    } catch (error) {
+        console.error('Failed to rename repository:', error);
+        throw error;
+    }
+}
+
+// Fonction pour créer un commentaire d'alerte
+async function createAlertComment(owner, repo, message, token) {
+    const url = `https://api.github.com/repos/${owner}/${repo}/issues`;
+    try {
+        await axios.post(url, {
+            title: "🚨 Nom du dépôt invalide",
+            body: message
+        }, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                Accept: 'application/vnd.github.v3+json',
+            }
+        });
+        console.log('Alert comment created successfully.');
+    } catch (error) {
+        console.error('Failed to create alert comment:', error);
+    }
+}
+
+// Fonction principale de gestion du renommage
 module.exports.handleRepositoryRename = async (payload) => {
     try {
         console.log('Received repository rename event payload:', JSON.stringify(payload, null, 2));
@@ -207,13 +246,22 @@ module.exports.handleRepositoryRename = async (payload) => {
         const oldName = payload.changes.repository.name.from;
         const newName = payload.repository.name;
         const fullName = payload.repository.full_name;
+        const [owner] = fullName.split('/'); // Extract owner from full_name
 
         console.log(`Repository renamed from ${oldName} to ${newName} (${fullName})`);
 
         // Vérification du format de newName
         if (!checkNewNameFormat(newName)) {
-            // Arrête la fonction si le nom ne respecte pas les conventions
-            console.error('Le nouveau nom ne respecte pas les conventions de nommage.');
+            // Message d'erreur pour le format attendu
+            const errorMessage = `Erreur de nommage - Résultat obtenu : "${newName}" - Résultat attendu : "nomprojet-objectif-techno"`;
+            console.error(errorMessage);
+
+            // Renommer le dépôt au nom initial
+            await renameRepository(owner, newName, oldName, process.env.GITHUB_TOKEN);
+
+            // Ajouter un commentaire d'alerte
+            await createAlertComment(owner, oldName, errorMessage, process.env.GITHUB_TOKEN);
+
             return;
         }
 
