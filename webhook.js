@@ -42,36 +42,44 @@ app.post('/webhook', async (req, res) => {
             return res.status(400).json({ status: 'error', message: 'Payload is undefined or null' });
         }
 
+        // Une seule réponse à la fin du traitement
+        let result;
+        
         switch (event) {
             case 'push':
                 console.log('Processing push event...');
                 await handlePush(payload);
                 console.log('Push event processed successfully.');
-                return res.status(200).json({ status: 'success', event });
+                result = { status: 'success', event };
+                break;
                 
             case 'pull_request':
                 console.log('Processing pull request event...');
                 await handlePullRequest(payload);
                 console.log('Pull request event processed successfully.');
-                return res.status(200).json({ status: 'success', event });
+                result = { status: 'success', event };
+                break;
                 
             case 'issue_comment':
                 console.log('Processing issue comment event...');
                 await handleIssueComment(payload);
                 console.log('Issue comment event processed successfully.');
-                return res.status(200).json({ status: 'success', event });
+                result = { status: 'success', event };
+                break;
                 
             case 'security_advisory':
                 console.log('Processing security advisory event...');
                 await handleSecurityAdvisory(payload);
                 console.log('Security advisory event processed successfully.');
-                return res.status(200).json({ status: 'success', event });
+                result = { status: 'success', event };
+                break;
                 
             case 'repository_vulnerability_alert':
                 console.log('Processing repository vulnerability alert event...');
                 await handleRepositoryVulnerabilityAlert(payload);
                 console.log('Repository vulnerability alert event processed successfully.');
-                return res.status(200).json({ status: 'success', event });
+                result = { status: 'success', event };
+                break;
                 
             case 'repository':
                 const action = payload.action;
@@ -79,25 +87,34 @@ app.post('/webhook', async (req, res) => {
                     console.log('Processing repository rename event...');
                     await handleRepositoryRename(payload);
                     console.log('Repository rename event processed successfully.');
-                    return res.status(200).json({ status: 'success', event });
+                    result = { status: 'success', event };
                 } else {
                     console.log(`Unhandled repository action: ${action}`);
-                    return res.status(400).json({ status: 'error', message: `Unhandled repository action: ${action}` });
+                    result = { status: 'error', message: `Unhandled repository action: ${action}` };
                 }
+                break;
 
             case 'deployment_status':
                 console.log('Processing deployment status event...');
                 await handleDeploymentStatus(payload);
                 console.log('Deployment status event processed successfully.');
-                return res.status(200).json({ status: 'success', event });
+                result = { status: 'success', event };
+                break;
                 
             default:
                 console.log(`Unhandled event type: ${event}`);
-                return res.status(400).json({ status: 'error', message: `Unhandled event type: ${event}` });
+                result = { status: 'error', message: `Unhandled event type: ${event}` };
         }
+
+        // Une seule réponse à la fin
+        return res.status(result.status === 'success' ? 200 : 400).json(result);
+
     } catch (error) {
         console.error('Webhook error:', error);
-        return res.status(500).json({ status: 'error', message: error.message });
+        // Vérifier si une réponse n'a pas déjà été envoyée
+        if (!res.headersSent) {
+            return res.status(500).json({ status: 'error', message: error.message });
+        }
     }
 });
 
