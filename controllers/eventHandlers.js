@@ -185,9 +185,22 @@ module.exports.handleRepositoryVulnerabilityAlert = async (payload) => {
     }
 };
 
+// Fonction pour formater le message d'erreur en nom valide pour GitHub
+function formatErrorMessage(invalidName) {
+    // Création du message d'erreur de base
+    const baseMessage = `resultat-obtenu-${invalidName}-resultat-attendu-nomprojet-objectif-techno`;
+
+    // Nettoyage et formatage du message
+    return baseMessage
+        .toLowerCase() // Tout en minuscules
+        .replace(/[^a-z0-9-]/g, '-') // Remplace les caractères non alphanumériques par des tirets
+        .replace(/-+/g, '-') // Remplace les séquences de tirets par un seul tiret
+        .replace(/^-|-$/g, '') // Enlève les tirets au début et à la fin
+        .substring(0, 100); // Limite la longueur à 100 caractères (limite GitHub)
+}
+
 // Fonction de vérification
 function checkNewNameFormat(name) {
-    // Vérification que le nom n'est pas vide
     if (!name || typeof name !== 'string') {
         return false;
     }
@@ -237,7 +250,6 @@ module.exports.handleRepositoryRename = async (payload) => {
     try {
         console.log('Received repository rename event payload:', JSON.stringify(payload, null, 2));
 
-        // Vérification de la présence des données nécessaires
         if (!payload?.repository?.name || !payload?.changes?.repository?.name?.from) {
             throw new Error('Payload invalide: données manquantes');
         }
@@ -249,34 +261,29 @@ module.exports.handleRepositoryRename = async (payload) => {
 
         console.log(`Tentative de renommage: ${oldName} → ${newName} (${fullName})`);
 
-        // Vérification du format
         if (!checkNewNameFormat(newName)) {
-            console.log('Format invalide détecté, application du renommage d\'erreur...');
+            console.log('Format invalide détecté, application du renommage avec message d\'erreur...');
 
-            // Génération du nom d'erreur
-            const timestamp = Date.now();
-            const errorName = `invalid-name-${timestamp}`;
+            // Création du message d'erreur formaté
+            const errorName = formatErrorMessage(newName);
 
             try {
-                // Renommage avec le nom d'erreur
                 await renameRepository(
                     owner,
-                    newName, // Nom actuel du repo
+                    newName,
                     errorName,
                     process.env.GITHUB_TOKEN
                 );
-                console.log(`Repository renommé avec succès en: ${errorName}`);
+                console.log(`Repository renommé avec message d'erreur: ${errorName}`);
 
-                // Notification Slack de l'erreur
-                await notifySlack(`⚠️ Erreur de nommage détectée: ${newName} → ${errorName}`);
+                await notifySlack(`⚠️ Format invalide détecté.\nNom invalide: ${newName}\nRenommé en: ${errorName}`);
                 return;
             } catch (renameError) {
-                console.error('Erreur lors du renommage avec nom d\'erreur:', renameError);
+                console.error('Erreur lors du renommage avec message d\'erreur:', renameError);
                 throw renameError;
             }
         }
 
-        // Log de l'événement si le format est valide
         await logEvent('repository_rename', payload);
         await notifySlack(`✅ Repository renommé: ${oldName} → ${newName}`);
 
