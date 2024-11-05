@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Webhook Logs</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .log { background-color: #fff; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .timestamp { color: #888; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <h1>Webhook Event Logs</h1>
+    <div id="log-container"></div>
+
+    <script>
+        async function fetchLogs() {
+            try {
+                const response = await fetch('/logs.json');
+                const logs = await response.json();
+                const container = document.getElementById('log-container');
+                container.innerHTML = '';
+
+                logs.forEach(log => {
+                    const logDiv = document.createElement('div');
+                    logDiv.classList.add('log');
+
+                    const timestamp = document.createElement('div');
+                    timestamp.classList.add('timestamp');
+                    timestamp.textContent = `Time: ${new Date(log.timestamp).toLocaleString()}`;
+                    logDiv.appendChild(timestamp);
+
+                    const event = document.createElement('p');
+                    event.textContent = `Event: ${log.event}`;
+                    logDiv.appendChild(event);
+
+                    if (log.event === 'repository_rename') {
+                        const renameInfo = document.createElement('p');
+                        renameInfo.textContent = `Repository renamed from ${log.data.oldName} to ${log.data.newName} (${log.data.fullName})`;
+                        logDiv.appendChild(renameInfo);
+                    }
+
+                    container.appendChild(logDiv);
+                });
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+            }
+        }
+
+        fetchLogs();
+        setInterval(fetchLogs, 5000); // Rafraîchir les logs toutes les 5 secondes
+    </script>
+</body>
+</html>
