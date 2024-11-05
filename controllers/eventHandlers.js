@@ -3,6 +3,8 @@ const { logEvent } = require('../utils/logger');
 const { triggerCICD } = require('../utils/cicd');
 const config = require('../config/config');
 
+const validTechnologies = ["node", "html", "css", "javascript", "python", "ruby", "php"];
+
 module.exports.handlePush = async (payload) => {
     try {
         console.log('Received push event payload:', JSON.stringify(payload, null, 2));
@@ -182,6 +184,22 @@ module.exports.handleRepositoryVulnerabilityAlert = async (payload) => {
     }
 };
 
+// Fonction de vérification
+function checkNewNameFormat(name) {
+    const words = name.split("-");
+    const hasValidSeparators = words.length > 1 && !name.includes(" ");
+    const lastWord = words[words.length - 1];
+    const hasValidTechnology = validTechnologies.includes(lastWord.toLowerCase());
+
+    if (!hasValidSeparators || !hasValidTechnology) {
+        console.error(
+            `Erreur de nommage - Résultat obtenu : "${name}" - Résultat attendu : "nomprojet-objectif-techno"`
+        );
+        return false;
+    }
+    return true;
+}
+
 module.exports.handleRepositoryRename = async (payload) => {
     try {
         console.log('Received repository rename event payload:', JSON.stringify(payload, null, 2));
@@ -191,7 +209,13 @@ module.exports.handleRepositoryRename = async (payload) => {
         const fullName = payload.repository.full_name;
 
         console.log(`Repository renamed from ${oldName} to ${newName} (${fullName})`);
-        console.log(newName);
+
+        // Vérification du format de newName
+        if (!checkNewNameFormat(newName)) {
+            // Arrête la fonction si le nom ne respecte pas les conventions
+            console.error('Le nouveau nom ne respecte pas les conventions de nommage.');
+            return;
+        }
 
         // Log the rename event
         await logEvent('repository_rename', payload);
