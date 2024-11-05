@@ -1,13 +1,22 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { handlePush, handlePullRequest, handleIssueComment, handleSecurityAdvisory, handleRepositoryVulnerabilityAlert } = require('./controllers/eventHandlers');
+const { 
+    handlePush, 
+    handlePullRequest, 
+    handleIssueComment, 
+    handleSecurityAdvisory, 
+    handleRepositoryVulnerabilityAlert, 
+    handleRepositoryRename, 
+    handleDeploymentStatus 
+} = require('./controllers/eventHandlers');
 const verifySignature = require('./middlewares/verifySignature');
 const config = require('./config/config');
 
 const app = express();
 
-// Middleware pour parser les requêtes JSON et vérifier les signatures des webhooks
+// Middleware pour parser JSON et URL-encoded, avec vérification de signature
 app.use(bodyParser.json({ verify: verifySignature }));
+app.use(bodyParser.urlencoded({ extended: true, verify: verifySignature }));
 
 // Servir des fichiers statiques (si nécessaire)
 app.use(express.static('public'));
@@ -16,7 +25,7 @@ app.use(express.static('public'));
 app.get('/', (req, res) => {
     res.send('Bienvenue sur le serveur de webhooks GitHub !');
 });
-     
+
 // Route principale pour gérer les webhooks GitHub
 app.post('/webhook', async (req, res) => {
     try {
@@ -74,6 +83,11 @@ app.post('/webhook', async (req, res) => {
                     console.log(`Unhandled repository action: ${payload.action}`);
                 }
                 break;
+            case 'deployment_status':
+                console.log('Processing deployment status event...');
+                await handleDeploymentStatus(payload);
+                console.log('Deployment status event processed successfully.');
+                break;
             default:
                 console.log(`Unhandled event type: ${event}`);
                 return res.status(400).json({ status: 'error', message: `Unhandled event type: ${event}` });
@@ -88,5 +102,5 @@ app.post('/webhook', async (req, res) => {
 
 // Démarrer le serveur
 app.listen(config.port, () => {
-    console.log(`=>Webhook server running on http://localhost:${config.port}`);
+    console.log(`=> Webhook server running on http://localhost:${config.port}`);
 });
