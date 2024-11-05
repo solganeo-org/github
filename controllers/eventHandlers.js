@@ -191,6 +191,7 @@ module.exports.handleRepositoryRename = async (payload) => {
         const fullName = payload.repository.full_name;
 
         console.log(`Repository renamed from ${oldName} to ${newName} (${fullName})`);
+        console.log(newName);
 
         // Log the rename event
         await logEvent('repository_rename', payload);
