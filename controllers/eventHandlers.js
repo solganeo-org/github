@@ -187,10 +187,9 @@ module.exports.handleRepositoryVulnerabilityAlert = async (payload) => {
 
 // Fonction pour formater le message d'erreur en nom valide pour GitHub
 function formatErrorMessage(invalidName) {
-    function formatErrorMessage(invalidName) {
-        const timestamp = Date.now().toString().slice(-4); // Prendre juste les 4 derniers chiffres
-        return `format-incorrect-${timestamp}-projet-techno`;
-    }
+    // Création du message d'erreur simple
+    const timestamp = Date.now().toString().slice(-4);
+    return `nom-invalide-${timestamp}-format-projet-techno`;
 }
 
 // Fonction de vérification
@@ -220,11 +219,11 @@ async function renameRepository(owner, repo, newName, token, maxRetries = 3, del
     }
 
     const url = `https://api.github.com/repos/${owner}/${repo}`;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
             console.log(`Tentative de renommage ${attempt}/${maxRetries}`);
-            
+
             const response = await axios.patch(
                 url,
                 { name: newName },
@@ -239,13 +238,13 @@ async function renameRepository(owner, repo, newName, token, maxRetries = 3, del
             return response.data;
         } catch (error) {
             const isOperationInProgress = error.response?.data?.message?.includes('orchestration in progress');
-            
+
             if (isOperationInProgress && attempt < maxRetries) {
                 console.log(`Opération en cours, attente de ${delay}ms avant nouvelle tentative...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
                 continue;
             }
-            
+
             console.error('Erreur détaillée:', error.response?.data || error.message);
             throw error;
         }
@@ -255,6 +254,8 @@ async function renameRepository(owner, repo, newName, token, maxRetries = 3, del
 // Fonction principale de gestion du renommage
 module.exports.handleRepositoryRename = async (payload) => {
     try {
+        console.log('Received repository rename event payload:', JSON.stringify(payload, null, 2));
+
         if (!payload?.repository?.name || !payload?.changes?.repository?.name?.from) {
             throw new Error('Payload invalide: données manquantes');
         }
@@ -268,16 +269,32 @@ module.exports.handleRepositoryRename = async (payload) => {
 
         if (!checkNewNameFormat(newName)) {
             console.log('Format invalide détecté, application du renommage avec message d\'erreur...');
-            const errorName = formatErrorMessage(newName);
+
+            // Création du message d'erreur formaté avec timestamp pour éviter les conflits
+            const timestamp = Date.now();
+            const errorName = formatErrorMessage(newName) + `-${timestamp}`;
 
             try {
-                await renameRepository(owner, newName, errorName, process.env.GITHUB_TOKEN);
+                await renameRepository(
+                    owner,
+                    newName, // Le nom actuel du repo
+                    errorName,
+                    process.env.GITHUB_TOKEN
+                );
                 console.log(`Repository renommé avec message d'erreur: ${errorName}`);
-                await notifySlack(`⚠️ Format invalide: ${newName}. Renommé en: ${errorName}`);
+
+                await notifySlack(`⚠️ Format invalide détecté.\nNom invalide: ${newName}\nRenommé en: ${errorName}`);
                 return;
             } catch (renameError) {
-                console.error('Erreur lors du renommage:', renameError);
-                throw renameError;
+                if (renameError.response?.status === 422) {
+                    console.log('Erreur 422 lors du renommage, attente avant nouvelle tentative...');
+                    // Attendre un peu et réessayer une dernière fois
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    await renameRepository(owner, newName, errorName, process.env.GITHUB_TOKEN);
+                } else {
+                    console.error('Erreur lors du renommage avec message d\'erreur:', renameError);
+                    throw renameError;
+                }
             }
         }
 
