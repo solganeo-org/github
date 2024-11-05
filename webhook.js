@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const { handlePush, handlePullRequest, handleIssueComment, handleSecurityAdvisory, handleRepositoryVulnerabilityAlert, handleRepositoryRename, handleDeploymentStatus } = require('./controllers/eventHandlers');
 const verifySignature = require('./middlewares/verifySignature');
 const config = require('./config/config');
+const path = require('path');
 
 const app = express();
 
@@ -16,6 +17,10 @@ app.use(express.static('public'));
 // Route pour la racine du serveur
 app.get('/', (req, res) => {
     res.send('Bienvenue sur le serveur de webhooks GitHub !');
+});
+
+app.get('/logs.json', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'logs.json'));
 });
 
 // Route principale pour gérer les webhooks GitHub
