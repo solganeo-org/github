@@ -219,29 +219,42 @@ function checkNewNameFormat(name) {
     return true;
 }
 
-// Fonction pour renommer le dépôt
-async function renameRepository(owner, repo, newName, token) {
+// Fonction pour renommer le dépôt avec retry
+async function renameRepository(owner, repo, newName, token, maxRetries = 3, delay = 2000) {
     if (!owner || !repo || !newName || !token) {
         throw new Error('Paramètres manquants pour le renommage');
     }
 
     const url = `https://api.github.com/repos/${owner}/${repo}`;
-    try {
-        const response = await axios.patch(
-            url,
-            { name: newName },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    Accept: 'application/vnd.github.v3+json',
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`Tentative de renommage ${attempt}/${maxRetries}`);
+
+            const response = await axios.patch(
+                url,
+                { name: newName },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: 'application/vnd.github.v3+json',
+                    }
                 }
+            );
+            console.log(`Repository renamed successfully to ${newName}`);
+            return response.data;
+        } catch (error) {
+            const isOperationInProgress = error.response?.data?.message?.includes('orchestration in progress');
+
+            if (isOperationInProgress && attempt < maxRetries) {
+                console.log(`Opération en cours, attente de ${delay}ms avant nouvelle tentative...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
             }
-        );
-        console.log(`Repository renamed successfully to ${newName}`);
-        return response.data;
-    } catch (error) {
-        console.error('Erreur détaillée:', error.response?.data || error.message);
-        throw error;
+
+            console.error('Erreur détaillée:', error.response?.data || error.message);
+            throw error;
+        }
     }
 }
 
@@ -264,13 +277,14 @@ module.exports.handleRepositoryRename = async (payload) => {
         if (!checkNewNameFormat(newName)) {
             console.log('Format invalide détecté, application du renommage avec message d\'erreur...');
 
-            // Création du message d'erreur formaté
-            const errorName = formatErrorMessage(newName);
+            // Création du message d'erreur formaté avec timestamp pour éviter les conflits
+            const timestamp = Date.now();
+            const errorName = formatErrorMessage(newName) + `-${timestamp}`;
 
             try {
                 await renameRepository(
                     owner,
-                    newName,
+                    newName, // Le nom actuel du repo
                     errorName,
                     process.env.GITHUB_TOKEN
                 );
@@ -279,8 +293,15 @@ module.exports.handleRepositoryRename = async (payload) => {
                 await notifySlack(`⚠️ Format invalide détecté.\nNom invalide: ${newName}\nRenommé en: ${errorName}`);
                 return;
             } catch (renameError) {
-                console.error('Erreur lors du renommage avec message d\'erreur:', renameError);
-                throw renameError;
+                if (renameError.response?.status === 422) {
+                    console.log('Erreur 422 lors du renommage, attente avant nouvelle tentative...');
+                    // Attendre un peu et réessayer une dernière fois
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    await renameRepository(owner, newName, errorName, process.env.GITHUB_TOKEN);
+                } else {
+                    console.error('Erreur lors du renommage avec message d\'erreur:', renameError);
+                    throw renameError;
+                }
             }
         }
 
