@@ -214,27 +214,12 @@ async function renameRepository(owner, repo, newName, token) {
         console.log(`Repository renamed to ${newName}`);
         return response.data;
     } catch (error) {
-        console.error('Failed to rename repository:', error);
+        if (error.response && error.response.status === 422) {
+            console.error('Erreur 422 : format de données non valide ou nom déjà utilisé.');
+        } else {
+            console.error('Erreur lors du renommage du repository:', error.message);
+        }
         throw error;
-    }
-}
-
-// Fonction pour créer un commentaire d'alerte
-async function createAlertComment(owner, repo, message, token) {
-    const url = `https://api.github.com/repos/${owner}/${repo}/issues`;
-    try {
-        await axios.post(url, {
-            title: "🚨 Nom du dépôt invalide",
-            body: message
-        }, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: 'application/vnd.github.v3+json',
-            }
-        });
-        console.log('Alert comment created successfully.');
-    } catch (error) {
-        console.error('Failed to create alert comment:', error);
     }
 }
 
@@ -252,16 +237,13 @@ module.exports.handleRepositoryRename = async (payload) => {
 
         // Vérification du format de newName
         if (!checkNewNameFormat(newName)) {
-            // Message d'erreur pour le format attendu
+            // Message d'erreur formaté pour le renommage
             const errorMessage = `Erreur de nommage - Résultat obtenu : "${newName}" - Résultat attendu : "nomprojet-objectif-techno"`;
-            console.error(errorMessage);
 
-            // Renommer le dépôt au nom initial
-            await renameRepository(owner, newName, oldName, process.env.GITHUB_TOKEN);
+            // Renommer le dépôt avec le message d'erreur
+            await renameRepository(owner, newName, errorMessage, process.env.GITHUB_TOKEN);
 
-            // Ajouter un commentaire d'alerte
-            await createAlertComment(owner, oldName, errorMessage, process.env.GITHUB_TOKEN);
-
+            console.log(`Repository renamed to error message: ${errorMessage}`);
             return;
         }
 
