@@ -1,38 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Webhook Logs</title>
+    <title>Logs GitHub Webhook</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
-        .log { background-color: #fff; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
-        .timestamp { color: #888; font-size: 0.9em; }
+        body {
+            font-family: monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            margin: 0;
+        }
+        .log-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .log-entry {
+            padding: 8px;
+            margin: 4px 0;
+            border-radius: 4px;
+        }
+        .log-entry:nth-child(odd) {
+            background: #252525;
+        }
+        .info {
+            color: #569cd6;
+        }
+        .error {
+            color: #f14c4c;
+        }
+        .success {
+            color: #6a9955;
+        }
+        .warning {
+            color: #dcdcaa;
+        }
+        .timestamp {
+            color: #808080;
+            margin-right: 10px;
+        }
+        h1 {
+            color: #569cd6;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Webhook Event Logs</h1>
-    <div id="logs"></div>
+    <div class="log-container">
+        <h1>GitHub Webhook Logs</h1>
+        <div id="logs"></div>
+    </div>
 
     <script>
-        function updateLogs() {
-            fetch('/logs.json')
-                .then(res => res.json())
-                .then(logs => {
-                    const html = logs.map(log => `
-                        <div class="log">
-                            <div>${new Date(log.timestamp).toLocaleString()}</div>
-                            <div>${log.message}</div>
-                        </div>
-                    `).join('');
-                    document.getElementById('logs').innerHTML = html;
-                })
-                .catch(console.error);
+        // Fonction pour ajouter un log
+        function addLog(message, type = 'info') {
+            const logsDiv = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry ${type}`;
+            
+            const timestamp = new Date().toISOString();
+            logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
+            
+            logsDiv.insertBefore(logEntry, logsDiv.firstChild);
         }
 
-        // Mettre à jour toutes les 5 secondes
-        updateLogs();
-        setInterval(updateLogs, 5000);
+        // Fonction pour récupérer les nouveaux logs
+        async function fetchLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const logs = await response.json();
+                
+                logs.forEach(log => {
+                    const type = log.message.includes('Erreur') ? 'error' 
+                             : log.message.includes('succès') ? 'success'
+                             : log.message.includes('Format invalide') ? 'warning'
+                             : 'info';
+                    addLog(log.message, type);
+                });
+            } catch (error) {
+                console.error('Erreur lors de la récupération des logs:', error);
+            }
+        }
+
+        // Mettre à jour les logs toutes les 2 secondes
+        setInterval(fetchLogs, 2000);
+        
+        // Charger les logs au démarrage
+        fetchLogs();
     </script>
 </body>
 </html>
