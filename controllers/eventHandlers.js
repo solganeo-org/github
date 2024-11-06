@@ -275,26 +275,27 @@ module.exports.handleRepositoryRename = async (payload) => {
         const fullName = payload.repository.full_name;
         const [owner, repo] = fullName.split('/');
 
-        console.log(`Tentative de renommage: ${oldName} → ${newName} (${fullName})`);
+        // Si c'est déjà le message d'erreur, on ignore
+        if (newName === 'nom-invalide-format-projet-techno') {
+            return;
+        }
+
         addLog(`Tentative de renommage: ${oldName} → ${newName} (${fullName})`);
 
         if (!checkNewNameFormat(newName)) {
-            console.log('Format invalide détecté, application du renommage avec message d\'erreur...');
             addLog('Format invalide détecté, application du renommage avec message d\'erreur...');
             const errorName = formatErrorMessage(newName);
 
             await renameRepository(owner, newName, errorName, process.env.GITHUB_TOKEN);
-            console.log(`Repository renommé avec message d'erreur: ${errorName}`);
             addLog(`Repository renommé avec message d'erreur: ${errorName}`);
             await notifySlack(`⚠️ Format invalide: ${newName}`);
-            return; // On s'arrête ici après un renommage réussi
+            return;
         }
 
         await logEvent('repository_rename', payload);
         await notifySlack(`✅ Repository renommé: ${oldName} → ${newName}`);
 
     } catch (error) {
-        console.error('Erreur lors du traitement du renommage:', error);
         addLog(`Erreur lors du traitement du renommage: ${error.message}`);
         await notifySlack(`❌ Échec du renommage: ${error.message}`);
         throw error;
