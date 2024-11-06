@@ -261,6 +261,8 @@ function addLog(message) {
     if (logs.length > 100) logs.shift();
 }
 
+module.exports.getLogs = () => logs;
+
 // Fonction principale de gestion du renommage
 module.exports.handleRepositoryRename = async (payload) => {
     try {
@@ -322,7 +324,3 @@ module.exports.handleDeploymentStatus = async (payload) => {
         throw error;
     }
 };
-
-app.get('/api/logs', (req, res) => {
-    res.json(logs);
-});

@@ -23,6 +23,11 @@ app.get('/logs.json', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'logs.json'));
 });
 
+// Route pour récupérer les logs
+app.get('/api/logs', (req, res) => {
+    res.json(getLogs());
+});
+
 // Route principale pour gérer les webhooks GitHub
 app.post('/webhook', async (req, res) => {
     try {
