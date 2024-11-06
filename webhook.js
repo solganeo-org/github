@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const { handlePush, handlePullRequest, handleIssueComment, handleSecurityAdvisory, handleRepositoryVulnerabilityAlert, handleRepositoryRename, handleDeploymentStatus } = require('./controllers/eventHandlers');
+const { handlePush, handlePullRequest, handleIssueComment, handleSecurityAdvisory, handleRepositoryVulnerabilityAlert, handleRepositoryRename, handleDeploymentStatus, getLogs } = require('./controllers/eventHandlers');
 const verifySignature = require('./middlewares/verifySignature');
 const config = require('./config/config');
 const path = require('path');
