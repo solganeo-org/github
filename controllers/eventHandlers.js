@@ -4,39 +4,7 @@ const { triggerCICD } = require('../utils/cicd');
 const config = require('../config/config');
 const axios = require('axios');
 
-const validTechnologies = [
-    // Frontend
-    "html", "css", "javascript", "typescript", "react", "vue", "angular", "svelte", "nextjs", "nuxt",
-    "jquery", "bootstrap", "tailwind", "sass", "less", "webpack", "vite", "parcel", "gatsby", "ember",
-    "backbone", "webcomponents", "pwa", "graphql", "apollo",
-    
-    // Backend
-    "node", "nodejs","python", "ruby", "php", "java", "kotlin", "scala", "go", "rust", "csharp", "fsharp",
-    "dotnet", "spring", "django", "flask", "fastapi", "express", "nest", "laravel", "symfony",
-    "rails", "aspnet", "deno", "elixir", "phoenix", "perl", "haskell", "erlang",
-    
-    // Mobile
-    "android", "ios", "flutter", "reactnative", "xamarin", "ionic", "cordova", "swift", "kotlin",
-    
-    // Database
-    "mysql", "postgresql", "mongodb", "redis", "elasticsearch", "cassandra", "oracle", "mssql",
-    "sqlite", "mariadb", "dynamodb", "couchdb", "neo4j", "firebase",
-    
-    // DevOps & Cloud
-    "aws", "azure", "gcp", "docker", "kubernetes", "jenkins", "gitlab", "github", "bitbucket",
-    "terraform", "ansible", "puppet", "chef", "nginx", "apache", "linux", "windows", "macos",
-    
-    // Data Science & AI
-    "tensorflow", "pytorch", "keras", "pandas", "numpy", "scipy", "scikit", "jupyter",
-    "hadoop", "spark", "tableau", "powerbi", "airflow",
-    
-    // Testing
-    "jest", "cypress", "selenium", "puppeteer", "mocha", "chai", "junit", "pytest",
-    
-    // Others
-    "unity", "unreal", "webgl", "threejs", "blockchain", "solidity", "webassembly", "rust",
-    "arduino", "raspberry", "embedded", "iot"
-];
+const validTechnologies = ["node", "html", "css", "javascript", "python", "ruby", "php"];
 
 module.exports.handlePush = async (payload) => {
     try {
