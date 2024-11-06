@@ -252,6 +252,8 @@ async function renameRepository(owner, repo, newName, token, maxRetries = 3, del
 // Fonction principale de gestion du renommage
 module.exports.handleRepositoryRename = async (payload) => {
     try {
+        console.log('Received repository rename event payload:', JSON.stringify(payload, null, 2));
+
         if (!payload?.repository?.name || !payload?.changes?.repository?.name?.from) {
             throw new Error('Payload invalide: données manquantes');
         }
@@ -265,12 +267,33 @@ module.exports.handleRepositoryRename = async (payload) => {
 
         if (!checkNewNameFormat(newName)) {
             console.log('Format invalide détecté, application du renommage avec message d\'erreur...');
-            const errorName = formatErrorMessage(newName);
 
-            await renameRepository(owner, newName, errorName, process.env.GITHUB_TOKEN);
-            console.log(`Repository renommé avec message d'erreur: ${errorName}`);
-            await notifySlack(`⚠️ Format invalide: ${newName}`);
-            return; // On s'arrête ici après un renommage réussi
+            // Création du message d'erreur formaté avec timestamp pour éviter les conflits
+            const timestamp = Date.now();
+            const errorName = formatErrorMessage(newName) + `-${timestamp}`;
+
+            try {
+                await renameRepository(
+                    owner,
+                    newName, // Le nom actuel du repo
+                    errorName,
+                    process.env.GITHUB_TOKEN
+                );
+                console.log(`Repository renommé avec message d'erreur: ${errorName}`);
+
+                await notifySlack(`⚠️ Format invalide détecté.\nNom invalide: ${newName}\nRenommé en: ${errorName}`);
+                return;
+            } catch (renameError) {
+                if (renameError.response?.status === 422) {
+                    console.log('Erreur 422 lors du renommage, attente avant nouvelle tentative...');
+                    // Attendre un peu et réessayer une dernière fois
+                    await new Promise(resolve => setTimeout(resolve, 5000));
+                    await renameRepository(owner, newName, errorName, process.env.GITHUB_TOKEN);
+                } else {
+                    console.error('Erreur lors du renommage avec message d\'erreur:', renameError);
+                    throw renameError;
+                }
+            }
         }
 
         await logEvent('repository_rename', payload);
